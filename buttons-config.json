@@ -7,7 +7,7 @@
   },
   {
     "enabled": true,
-    "imageUrl": "",
+    "imageUrl": "https://www.7strokes.com/images/logo.png",
     "redirectUrl": "https://www.7strokes.com",
     "target": "_blank"
   }
