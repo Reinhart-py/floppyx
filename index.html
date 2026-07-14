@@ -85,11 +85,20 @@
         }
       });
 
-      // Floating action buttons (supports multiple buttons stacked vertically)
-      const floatingButtons = config.floatingButtons || [];
-      const enabledButtons = floatingButtons.filter(btn => btn && btn.enabled);
+      // Floating action buttons (supports multiple buttons stacked vertically, loaded from JSON)
+      $.getJSON('buttons-config.json')
+        .done(function(data) {
+          renderFloatingButtons(data);
+        })
+        .fail(function() {
+          // Fallback to config.js floatingButtons config if JSON file load fails or is missing
+          renderFloatingButtons(config.floatingButtons || []);
+        });
 
-      if (enabledButtons.length > 0) {
+      function renderFloatingButtons(floatingButtonsList) {
+        const enabledButtons = (floatingButtonsList || []).filter(btn => btn && btn.enabled);
+        if (enabledButtons.length === 0) return;
+
         // SVG Icons dictionary
         const icons = {
           whatsapp: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436.002 9.858-4.415 9.86-9.86.001-2.639-1.024-5.12-2.887-6.985C16.577 1.895 14.097 1.866 12 1.866c-5.437 0-9.857 4.417-9.86 9.864-.001 1.73.473 3.42 1.37 4.913L2.51 21.465l5.137-1.311zM16.64 13.9c-.25-.125-1.478-.73-1.707-.813-.228-.083-.395-.125-.56.125-.166.25-.644.813-.789.979-.145.167-.29.188-.54.062-.25-.125-1.055-.389-2.01-1.241-.742-.662-1.244-1.48-1.39-1.73-.145-.25-.015-.385.11-.51.113-.113.25-.292.375-.438.125-.146.166-.25.25-.417.083-.167.042-.313-.02-.438-.063-.125-.56-1.354-.768-1.854-.203-.488-.406-.423-.56-.431-.144-.008-.31-.008-.477-.008s-.438.063-.667.313c-.23.25-.875.855-.875 2.083 0 1.229.896 2.417.996 2.563.1.146 1.763 2.693 4.272 3.778.597.258 1.064.412 1.428.528.6.191 1.147.164 1.58.1.482-.072 1.479-.604 1.687-1.166.208-.563.208-1.042.146-1.146-.063-.104-.23-.167-.48-.292z"/></svg>`,

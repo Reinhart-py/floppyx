@@ -60,15 +60,56 @@ To publish for free using Cloudflare Pages:
 
 ## Customization
 
-To view a different PDF:
-1. Place your PDF in the `assets/` folder.
-2. Open `config.js` and change the `pdfUrl` path:
-   ```javascript
-   window.FLIPBOOK_CONFIG = {
-     pdfUrl: 'assets/your-new-file.pdf',
-     animationStyle: '3d'
-   };
-   ```
+You can fully customize the digital reader's PDF, page-flipping sounds, and floating redirect buttons using two files:
+
+### 1. Main Configuration (`config.js`)
+Open `config.js` in the root folder to edit general flipbook options:
+
+```javascript
+window.FLIPBOOK_CONFIG = {
+  // 1. Path to your PDF file (placed in assets/ folder)
+  pdfUrl: 'assets/simple.pdf',
+  
+  // 2. Animation style: '3d' (realistic magazine) or '2d' (HTML5 flat turn)
+  animationStyle: '3d',
+  
+  // 3. Page flipping sound effect files
+  sounds: {
+    startFlip: 'sounds/start-flip.mp3',
+    endFlip: 'sounds/end-flip.mp3'
+  }
+};
+```
+
+---
+
+### 2. Floating Buttons Configuration (`buttons-config.json`)
+Open `buttons-config.json` in the root folder to add, change, or remove the round floating action buttons stacked in the bottom-right corner of the page:
+
+```json
+[
+  {
+    "enabled": true,
+    "imageUrl": "",
+    "redirectUrl": "https://wa.me/1234567890",
+    "target": "_blank"
+  },
+  {
+    "enabled": true,
+    "imageUrl": "",
+    "redirectUrl": "https://google.com",
+    "target": "_blank"
+  }
+]
+```
+
+#### Settings Details:
+* **`enabled`**: Set to `true` to show the button, or `false` to hide it.
+* **`imageUrl`**: URL or local path to a custom icon image (e.g. `images/my-logo.png`).
+  * *Tip: If you leave `imageUrl` blank (`""`), the application will auto-detect the URL (e.g. WhatsApp, Facebook, X/Twitter, Instagram, Email, or Phone) and automatically render the official brand SVG icon with its matching colors and pulsing effects!*
+* **`redirectUrl`**: The link target destination when clicked (e.g. WhatsApp chat link, your company homepage, email address with `mailto:`, etc.).
+* **`target`**: Set to `"_blank"` to open in a new tab, or `"_self"` to open in the current tab.
+
 
 ## License
 
