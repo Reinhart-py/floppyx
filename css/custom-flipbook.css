@@ -19,13 +19,22 @@ html, body {
   align-items: center;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle, #252525 0%, #0d0d0d 100%);
+  background: linear-gradient(135deg, #151515, #282828, #0b0b0b, #1e1e1e);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .flipbook-container {
   position: relative;
   display: none; /* Shown after load */
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  transform-style: preserve-3d;
 }
 
 /* StPageFlip (3D Engine) styles */
@@ -92,6 +101,42 @@ canvas {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Floating Density Toggler (Top-Right) */
+.density-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.density-toggle:hover {
+  transform: scale(1.1);
+  background: rgba(40, 40, 40, 0.9);
+}
+
+.density-toggle:active {
+  transform: scale(0.95);
+}
+
+.density-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
 }
 
 /* Overlay Navigation Controls */

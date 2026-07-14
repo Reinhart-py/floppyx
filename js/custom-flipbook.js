@@ -15,6 +15,7 @@ $(document).ready(function() {
   let zoomScale = 1;
   let bookWidth = 1000;  // Double-page width
   let bookHeight = 700; // Page height
+  let isHardPage = false; // Toggle page folding mode
   
   // Configure PDF.js worker
   const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -32,14 +33,16 @@ $(document).ready(function() {
     if (animationStyle === '2d') {
       initBook2D();
     } else {
-      initBook3D();
+      initBook3D(0);
+      createDensityToggle();
     }
+    setupParallax();
   }).catch(function(error) {
     console.error("Error loading PDF: ", error);
     $loader.find('span').text("Error loading PDF document.");
   });
 
-  // Render utility (renders high quality page to canvas)
+  // Render utility (renders page to canvas asynchronously)
   function renderPage(pageNum, $pageContainer) {
     return pdfDoc.getPage(pageNum).then(function(page) {
       const viewport = page.getViewport({ scale: 2.0 });
@@ -59,15 +62,28 @@ $(document).ready(function() {
   }
 
   // 1. STPAGEFLIP 3D ENGINE
-  async function initBook3D() {
+  async function initBook3D(initialPage = 0) {
     $book3d.empty();
     
     // Create pages dynamically
     for (let p = 1; p <= pageCount; p++) {
       const $page = $('<div class="st-page"></div>').attr('data-page-number', p);
+      if (isHardPage) {
+        $page.attr('data-density', 'hard');
+      } else {
+        $page.attr('data-density', 'soft');
+      }
       $book3d.append($page);
-      await renderPage(p, $page);
     }
+    
+    // Render all pages first
+    const renderPromises = [];
+    $book3d.find('.st-page').each(function() {
+      const p = parseInt($(this).attr('data-page-number'));
+      renderPromises.push(renderPage(p, $(this)));
+    });
+    
+    await Promise.all(renderPromises);
     
     // Initialize StPageFlip
     pageFlip = new St.PageFlip(document.getElementById('book-3d'), {
@@ -85,6 +101,10 @@ $(document).ready(function() {
     
     pageFlip.loadFromHTML(document.querySelectorAll('.st-page'));
     
+    if (initialPage > 0) {
+      pageFlip.turnToPage(initialPage);
+    }
+    
     // Trigger on flip event
     pageFlip.on('flip', function(e) {
       updatePageNumberDisplay3D(e.data);
@@ -95,7 +115,9 @@ $(document).ready(function() {
       updateScale();
     });
     
-    createControls();
+    if ($('.nav-controls').length === 0) {
+      createControls();
+    }
     setupEvents3D();
   }
 
@@ -129,7 +151,9 @@ $(document).ready(function() {
       updateScale();
     });
     
-    createControls();
+    if ($('.nav-controls').length === 0) {
+      createControls();
+    }
     setupEvents2D();
   }
 
@@ -186,6 +210,90 @@ $(document).ready(function() {
     });
   }
 
+  // Page density toggle (Hard / Soft cover mode)
+  function createDensityToggle() {
+    if ($('.density-toggle').length > 0) return;
+    
+    const $toggleBtn = $(`
+      <div class="density-toggle" title="Toggle Hard/Soft Page folding">
+        <svg viewBox="0 0 24 24" id="density-icon">
+          <path d="M21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM3 19V6h8v13H3zm18 0h-8V6h8v13z"/>
+        </svg>
+      </div>
+    `);
+    
+    $viewport.append($toggleBtn);
+    
+    $toggleBtn.on('click', function() {
+      if (animationStyle === '2d') return;
+      isHardPage = !isHardPage;
+      
+      // Update SVG icon path based on state
+      if (isHardPage) {
+        // Hardcover book icon representation
+        $('#density-icon').html('<path d="M19 2H5c-1.11 0-2 .9-2 2v16c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-5 18H5V4h9v16zm5 0h-3V4h3v16z"/>');
+      } else {
+        // Flexible curling pages icon representation
+        $('#density-icon').html('<path d="M21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM3 19V6h8v13H3zm18 0h-8V6h8v13z"/>');
+      }
+      
+      // Rebuild StPageFlip preserving current page index
+      if (pageFlip) {
+        const currentPage = pageFlip.getCurrentPageIndex();
+        pageFlip.destroy();
+        $book3d.hide();
+        $loader.show();
+        initBook3D(currentPage);
+      }
+    });
+  }
+
+  // Tilt parallax effect
+  function setupParallax() {
+    $viewport.on('mousemove', function(e) {
+      if (isZoomed) return;
+      
+      const width = $viewport.width();
+      const height = $viewport.height();
+      const mouseX = e.clientX - (width / 2);
+      const mouseY = e.clientY - (height / 2);
+      
+      // Smooth tilt values (max 5deg)
+      const tiltX = (mouseY / (height / 2)) * -5;
+      const tiltY = (mouseX / (width / 2)) * 5;
+      
+      const scaleX = (width * 0.9) / bookWidth;
+      const scaleY = (height * 0.9) / bookHeight;
+      const baseScale = Math.min(scaleX, scaleY, 1.2);
+      
+      $activeBook.css({
+        'transform': `scale(${baseScale}) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+        'transition': 'transform 0.1s ease-out'
+      });
+      
+      // Shift background linear-gradient slowly
+      const bgShiftX = (mouseX / (width / 2)) * -15;
+      const bgShiftY = (mouseY / (height / 2)) * -15;
+      $viewport.css('background-position', `calc(50% + ${bgShiftX}px) calc(50% + ${bgShiftY}px)`);
+    });
+    
+    $viewport.on('mouseleave', function() {
+      if (isZoomed) return;
+      
+      const width = $viewport.width();
+      const height = $viewport.height();
+      const scaleX = (width * 0.9) / bookWidth;
+      const scaleY = (height * 0.9) / bookHeight;
+      const baseScale = Math.min(scaleX, scaleY, 1.2);
+      
+      $activeBook.css({
+        'transform': `scale(${baseScale}) rotateX(0deg) rotateY(0deg)`,
+        'transition': 'transform 0.5s ease-out'
+      });
+      $viewport.css('background-position', '50% 50%');
+    });
+  }
+
   function updatePageNumberDisplay3D(pageIndex) {
     const $display = $('#page-display');
     if (!$display.length) return;
@@ -239,8 +347,8 @@ $(document).ready(function() {
 
   // 3D Event Handlers
   function setupEvents3D() {
-    $(window).on('resize', updateScale);
-    $(document).on('keydown', function(e) {
+    $(window).off('resize', updateScale).on('resize', updateScale);
+    $(document).off('keydown').on('keydown', function(e) {
       if (e.key === 'ArrowLeft') {
         pageFlip.flipPrev();
       } else if (e.key === 'ArrowRight') {
@@ -251,8 +359,8 @@ $(document).ready(function() {
     });
 
     let startX = 0, startY = 0, isDragging = false, bookLeft = 0, bookTop = 0;
-    $viewport.on('touchstart mousedown', function(e) {
-      if ($(e.target).closest('.nav-controls').length) return;
+    $viewport.off('touchstart mousedown').on('touchstart mousedown', function(e) {
+      if ($(e.target).closest('.nav-controls, .density-toggle').length) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
       if (clientX === undefined) return;
@@ -267,7 +375,7 @@ $(document).ready(function() {
       }
     });
 
-    $(document).on('touchmove mousemove', function(e) {
+    $(document).off('touchmove mousemove').on('touchmove mousemove', function(e) {
       if (!isDragging) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
@@ -279,14 +387,14 @@ $(document).ready(function() {
       }
     });
 
-    $(document).on('touchend mouseup', function() {
+    $(document).off('touchend mouseup').on('touchend mouseup', function() {
       if (!isDragging) return;
       isDragging = false;
       $book3d.css('cursor', isZoomed ? 'grab' : 'default');
     });
 
-    $viewport.on('dblclick', toggleZoom);
-    $viewport.on('wheel', function(e) {
+    $viewport.off('dblclick').on('dblclick', toggleZoom);
+    $viewport.off('wheel').on('wheel', function(e) {
       e.preventDefault();
       if (e.originalEvent.deltaY < 0) { if (!isZoomed) toggleZoom(); }
       else { if (isZoomed) toggleZoom(); }
@@ -295,8 +403,8 @@ $(document).ready(function() {
 
   // 2D Event Handlers
   function setupEvents2D() {
-    $(window).on('resize', updateScale);
-    $(document).on('keydown', function(e) {
+    $(window).off('resize', updateScale).on('resize', updateScale);
+    $(document).off('keydown').on('keydown', function(e) {
       if (e.key === 'ArrowLeft') {
         $book2d.turn('previous');
       } else if (e.key === 'ArrowRight') {
@@ -307,7 +415,7 @@ $(document).ready(function() {
     });
 
     let startX = 0, startY = 0, isDragging = false, bookLeft = 0, bookTop = 0;
-    $viewport.on('touchstart mousedown', function(e) {
+    $viewport.off('touchstart mousedown').on('touchstart mousedown', function(e) {
       if ($(e.target).closest('.nav-controls').length) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
@@ -323,7 +431,7 @@ $(document).ready(function() {
       }
     });
 
-    $(document).on('touchmove mousemove', function(e) {
+    $(document).off('touchmove mousemove').on('touchmove mousemove', function(e) {
       if (!isDragging) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
@@ -335,7 +443,7 @@ $(document).ready(function() {
       }
     });
 
-    $(document).on('touchend mouseup', function(e) {
+    $(document).off('touchend mouseup').on('touchend mouseup', function(e) {
       if (!isDragging) return;
       isDragging = false;
       $book2d.css('cursor', isZoomed ? 'grab' : 'default');
@@ -351,8 +459,8 @@ $(document).ready(function() {
       }
     });
 
-    $viewport.on('dblclick', toggleZoom);
-    $viewport.on('wheel', function(e) {
+    $viewport.off('dblclick').on('dblclick', toggleZoom);
+    $viewport.off('wheel').on('wheel', function(e) {
       e.preventDefault();
       if (e.originalEvent.deltaY < 0) { if (!isZoomed) toggleZoom(); }
       else { if (isZoomed) toggleZoom(); }
