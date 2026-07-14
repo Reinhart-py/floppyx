@@ -17,112 +17,46 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 2500px;
   position: relative;
   overflow: hidden;
   background: radial-gradient(circle, #252525 0%, #0d0d0d 100%);
 }
 
-/* 3D Book Layout */
-#book {
+.flipbook-container {
   position: relative;
-  width: 1000px; /* Base width for double page layout */
-  height: 700px; /* Base height */
-  transform-style: preserve-3d;
-  display: none; /* Shown after rendering starts */
+  display: none; /* Shown after load */
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
 }
 
-/* Spine line */
-#book::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4));
-  transform: translateX(-50%) translateZ(10px);
-  z-index: 10;
-  pointer-events: none;
+/* StPageFlip (3D Engine) styles */
+#book-3d {
+  width: 1000px;
+  height: 700px;
 }
 
-.sheet {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 50%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transform-origin: left center;
-  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.sheet.active {
-  pointer-events: auto;
-}
-
-.page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  background-color: #fcfcfc;
+.st-page {
+  background-color: #fff;
   overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.page.front {
-  z-index: 2;
-  transform: rotateY(0deg);
-  border-radius: 0 4px 4px 0;
-  box-shadow: inset 15px 0 30px rgba(0, 0, 0, 0.05), 1px 1px 2px rgba(0,0,0,0.1);
-}
-
-.page.back {
-  transform: rotateY(180deg);
-  border-radius: 4px 0 0 4px;
-  box-shadow: inset -15px 0 30px rgba(0, 0, 0, 0.05), -1px 1px 2px rgba(0,0,0,0.1);
-}
-
-.page-shadow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0);
-  pointer-events: none;
-  transition: background-color 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  z-index: 3;
-}
-
-.sheet.flipped .page.front .page-shadow {
-  background-color: rgba(0,0,0,0.4);
-}
-
-/* 2D turn.js Book Layout */
+/* turn.js (2D Engine) styles */
 #book-2d {
-  position: relative;
   width: 1000px;
   height: 700px;
-  display: none;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
 }
 
-#book-2d .page-2d {
+.page-2d {
   width: 500px;
   height: 700px;
   background-color: #fff;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 canvas {
@@ -160,7 +94,7 @@ canvas {
   to { transform: rotate(360deg); }
 }
 
-/* Navigation Controls Overlay */
+/* Overlay Navigation Controls */
 .nav-controls {
   position: absolute;
   bottom: 30px;

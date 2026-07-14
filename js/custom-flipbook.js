@@ -3,19 +3,18 @@ $(document).ready(function() {
   const animationStyle = window.FLIPBOOK_CONFIG.animationStyle || '3d'; // '3d' or '2d'
   
   const $viewport = $('#viewport');
-  const $book3d = $('#book');
+  const $book3d = $('#book-3d');
   const $book2d = $('#book-2d');
   const $loader = $('#loader');
   const $activeBook = (animationStyle === '2d') ? $book2d : $book3d;
   
   let pdfDoc = null;
   let pageCount = 0;
-  let numSheets = 0;
-  let currentSheet = 0; // Used for 3D state
+  let pageFlip = null; // StPageFlip instance
   let isZoomed = false;
   let zoomScale = 1;
-  let bookWidth = 1000;  // Base double-page width
-  let bookHeight = 700; // Base height
+  let bookWidth = 1000;  // Double-page width
+  let bookHeight = 700; // Page height
   
   // Configure PDF.js worker
   const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -29,7 +28,6 @@ $(document).ready(function() {
   pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
     pdfDoc = pdf;
     pageCount = pdf.numPages;
-    numSheets = Math.ceil((pageCount + 1) / 2);
     
     if (animationStyle === '2d') {
       initBook2D();
@@ -41,9 +39,9 @@ $(document).ready(function() {
     $loader.find('span').text("Error loading PDF document.");
   });
 
-  // Render utility (shared by both modes)
+  // Render utility (renders high quality page to canvas)
   function renderPage(pageNum, $pageContainer) {
-    pdfDoc.getPage(pageNum).then(function(page) {
+    return pdfDoc.getPage(pageNum).then(function(page) {
       const viewport = page.getViewport({ scale: 2.0 });
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -56,39 +54,42 @@ $(document).ready(function() {
         canvasContext: ctx,
         viewport: viewport
       };
-      page.render(renderContext);
+      return page.render(renderContext).promise;
     });
   }
 
-  // 1. ORIGINAL 3D ENGINE
-  function initBook3D() {
+  // 1. STPAGEFLIP 3D ENGINE
+  async function initBook3D() {
     $book3d.empty();
-    for (let s = 0; s < numSheets; s++) {
-      const $sheet = $('<div class="sheet"></div>').attr('data-sheet-index', s);
-      
-      // Left Page (Back of sheet)
-      const leftPageNum = 2 * s;
-      if (leftPageNum > 0 && leftPageNum <= pageCount) {
-        const $leftPage = $('<div class="page back"><div class="page-shadow"></div></div>').attr('data-page-number', leftPageNum);
-        $sheet.append($leftPage);
-        renderPage(leftPageNum, $leftPage);
-      } else {
-        $sheet.append('<div class="page back" style="background:#222;"><div class="page-shadow"></div></div>');
-      }
-      
-      // Right Page (Front of sheet)
-      const rightPageNum = 2 * s + 1;
-      if (rightPageNum <= pageCount) {
-        const $rightPage = $('<div class="page front"><div class="page-shadow"></div></div>').attr('data-page-number', rightPageNum);
-        $sheet.append($rightPage);
-        renderPage(rightPageNum, $rightPage);
-      } else {
-        $sheet.append('<div class="page front" style="background:#222;"><div class="page-shadow"></div></div>');
-      }
-      $book3d.append($sheet);
+    
+    // Create pages dynamically
+    for (let p = 1; p <= pageCount; p++) {
+      const $page = $('<div class="st-page"></div>').attr('data-page-number', p);
+      $book3d.append($page);
+      await renderPage(p, $page);
     }
     
-    updateSheetPositions();
+    // Initialize StPageFlip
+    pageFlip = new St.PageFlip(document.getElementById('book-3d'), {
+      width: 500,
+      height: 700,
+      size: "stretch",
+      minWidth: 300,
+      maxWidth: 1000,
+      minHeight: 400,
+      maxHeight: 1400,
+      drawShadow: true,
+      showCover: true,
+      usePortrait: true
+    });
+    
+    pageFlip.loadFromHTML(document.querySelectorAll('.st-page'));
+    
+    // Trigger on flip event
+    pageFlip.on('flip', function(e) {
+      updatePageNumberDisplay3D(e.data);
+    });
+    
     $loader.fadeOut(300, function() {
       $book3d.fadeIn(300);
       updateScale();
@@ -98,49 +99,16 @@ $(document).ready(function() {
     setupEvents3D();
   }
 
-  function updateSheetPositions() {
-    const $sheets = $('.sheet');
-    $sheets.each(function() {
-      const s = parseInt($(this).attr('data-sheet-index'));
-      if (s < currentSheet) {
-        $(this).addClass('flipped').css({
-          'transform': 'rotateY(-180deg)',
-          'z-index': s,
-          'pointer-events': 'none'
-        });
-      } else if (s === currentSheet) {
-        $(this).removeClass('flipped').css({
-          'transform': 'rotateY(0deg)',
-          'z-index': numSheets + 2,
-          'pointer-events': 'auto'
-        });
-      } else {
-        $(this).removeClass('flipped').css({
-          'transform': 'rotateY(0deg)',
-          'z-index': numSheets - s,
-          'pointer-events': 'none'
-        });
-      }
-    });
-
-    if (currentSheet > 0) {
-      $sheets.filter(`[data-sheet-index="${currentSheet - 1}"]`).css('pointer-events', 'auto');
-    }
-    updatePageNumberDisplay();
-  }
-
   // 2. TURN.JS 2D ENGINE
-  function initBook2D() {
+  async function initBook2D() {
     $book2d.empty();
     
-    // Create pages dynamically
     for (let p = 1; p <= pageCount; p++) {
       const $page = $('<div class="page-2d"></div>').attr('data-page-number', p);
       $book2d.append($page);
-      renderPage(p, $page);
+      await renderPage(p, $page);
     }
     
-    // Initialize turn.js plugin
     $book2d.turn({
       width: bookWidth,
       height: bookHeight,
@@ -187,7 +155,7 @@ $(document).ready(function() {
     const $controls = $(`
       <div class="nav-controls">
         <button class="nav-btn" id="btn-prev" title="Previous page">◀</button>
-        <div class="page-num" id="page-display">1 / 1</div>
+        <div class="page-num" id="page-display">Cover / 1</div>
         <button class="nav-btn" id="btn-next" title="Next page">▶</button>
         <button class="nav-btn" id="btn-zoom" title="Toggle zoom">🔍</button>
       </div>
@@ -199,7 +167,7 @@ $(document).ready(function() {
       if (animationStyle === '2d') {
         $book2d.turn('previous');
       } else {
-        if (currentSheet > 0) { currentSheet--; updateSheetPositions(); }
+        pageFlip.flipPrev();
       }
     });
     
@@ -208,7 +176,7 @@ $(document).ready(function() {
       if (animationStyle === '2d') {
         $book2d.turn('next');
       } else {
-        if (currentSheet < numSheets - 1) { currentSheet++; updateSheetPositions(); }
+        pageFlip.flipNext();
       }
     });
     
@@ -218,19 +186,18 @@ $(document).ready(function() {
     });
   }
 
-  function updatePageNumberDisplay() {
+  function updatePageNumberDisplay3D(pageIndex) {
     const $display = $('#page-display');
     if (!$display.length) return;
     
-    let displayStr = '';
-    if (currentSheet === 0) {
-      displayStr = 'Cover';
+    if (pageIndex === 0) {
+      $display.text(`Cover / ${pageCount}`);
     } else {
-      const leftPage = 2 * currentSheet;
-      const rightPage = 2 * currentSheet + 1;
-      displayStr = (rightPage <= pageCount) ? `${leftPage} - ${rightPage}` : `${leftPage}`;
+      const leftPage = pageIndex;
+      const rightPage = pageIndex + 1;
+      const displayStr = (rightPage <= pageCount) ? `${leftPage} - ${rightPage}` : `${leftPage}`;
+      $display.text(`${displayStr} / ${pageCount}`);
     }
-    $display.text(`${displayStr} / ${pageCount}`);
   }
 
   function updatePageNumberDisplay2D(pageIndex) {
@@ -275,9 +242,9 @@ $(document).ready(function() {
     $(window).on('resize', updateScale);
     $(document).on('keydown', function(e) {
       if (e.key === 'ArrowLeft') {
-        if (currentSheet > 0) { currentSheet--; updateSheetPositions(); }
+        pageFlip.flipPrev();
       } else if (e.key === 'ArrowRight') {
-        if (currentSheet < numSheets - 1) { currentSheet++; updateSheetPositions(); }
+        pageFlip.flipNext();
       } else if (e.key === 'Escape' && isZoomed) {
         toggleZoom();
       }
@@ -285,6 +252,7 @@ $(document).ready(function() {
 
     let startX = 0, startY = 0, isDragging = false, bookLeft = 0, bookTop = 0;
     $viewport.on('touchstart mousedown', function(e) {
+      if ($(e.target).closest('.nav-controls').length) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
       if (clientX === undefined) return;
@@ -311,20 +279,10 @@ $(document).ready(function() {
       }
     });
 
-    $(document).on('touchend mouseup', function(e) {
+    $(document).on('touchend mouseup', function() {
       if (!isDragging) return;
       isDragging = false;
       $book3d.css('cursor', isZoomed ? 'grab' : 'default');
-      const clientX = e.clientX || (e.originalEvent.changedTouches && e.originalEvent.changedTouches[0].clientX);
-      if (clientX === undefined) return;
-      const deltaX = clientX - startX;
-      if (!isZoomed && Math.abs(deltaX) > 60) {
-        if (deltaX > 0) {
-          if (currentSheet > 0) { currentSheet--; updateSheetPositions(); }
-        } else {
-          if (currentSheet < numSheets - 1) { currentSheet++; updateSheetPositions(); }
-        }
-      }
     });
 
     $viewport.on('dblclick', toggleZoom);
@@ -350,7 +308,6 @@ $(document).ready(function() {
 
     let startX = 0, startY = 0, isDragging = false, bookLeft = 0, bookTop = 0;
     $viewport.on('touchstart mousedown', function(e) {
-      // Don't intercept clicks on turn.js hotspots
       if ($(e.target).closest('.nav-controls').length) return;
       const clientX = e.clientX || (e.originalEvent.touches && e.originalEvent.touches[0].clientX);
       const clientY = e.clientY || (e.originalEvent.touches && e.originalEvent.touches[0].clientY);
