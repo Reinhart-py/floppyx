@@ -36,7 +36,24 @@
   
   <script>
     $(document).ready(function() {
-      const pdfUrl = (window.FLIPBOOK_CONFIG && window.FLIPBOOK_CONFIG.pdfUrl) || 'assets/simple.pdf';
+      const config = window.FLIPBOOK_CONFIG || {};
+      const pdfUrl = config.pdfUrl || 'assets/simple.pdf';
+      const sounds = config.sounds || {
+        startFlip: 'sounds/start-flip.mp3',
+        endFlip: 'sounds/end-flip.mp3'
+      };
+
+      // Device detection for default actions
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isAndroidPhone = isAndroid && /Mobi/i.test(navigator.userAgent);
+
+      // Default actions:
+      // Android Phone -> single page: ON, smart pan: ON, sound: ON
+      // Tablet and Desktop -> single page: OFF, smart pan: ON, sound: ON
+      const defaultSinglePage = isAndroidPhone;
+      const defaultSmartPan = true;
+      const defaultSounds = true;
+
       $('#book-container').FlipBook({
         pdf: pdfUrl,
         template: {
@@ -51,9 +68,166 @@
               href: 'css/font-awesome.min.css'
             }
           ],
-          script: 'js/default-book-view.js'
+          script: 'js/default-book-view.js',
+          sounds: sounds
+        },
+        actions: {
+          cmdSinglePage: {
+            active: defaultSinglePage,
+            activeForMobile: defaultSinglePage
+          },
+          cmdSmartPan: {
+            active: defaultSmartPan
+          },
+          cmdSounds: {
+            active: defaultSounds
+          }
         }
       });
+
+      // Floating action buttons (supports multiple buttons stacked vertically)
+      const floatingButtons = config.floatingButtons || [];
+      const enabledButtons = floatingButtons.filter(btn => btn && btn.enabled);
+
+      if (enabledButtons.length > 0) {
+        // SVG Icons dictionary
+        const icons = {
+          whatsapp: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436.002 9.858-4.415 9.86-9.86.001-2.639-1.024-5.12-2.887-6.985C16.577 1.895 14.097 1.866 12 1.866c-5.437 0-9.857 4.417-9.86 9.864-.001 1.73.473 3.42 1.37 4.913L2.51 21.465l5.137-1.311zM16.64 13.9c-.25-.125-1.478-.73-1.707-.813-.228-.083-.395-.125-.56.125-.166.25-.644.813-.789.979-.145.167-.29.188-.54.062-.25-.125-1.055-.389-2.01-1.241-.742-.662-1.244-1.48-1.39-1.73-.145-.25-.015-.385.11-.51.113-.113.25-.292.375-.438.125-.146.166-.25.25-.417.083-.167.042-.313-.02-.438-.063-.125-.56-1.354-.768-1.854-.203-.488-.406-.423-.56-.431-.144-.008-.31-.008-.477-.008s-.438.063-.667.313c-.23.25-.875.855-.875 2.083 0 1.229.896 2.417.996 2.563.1.146 1.763 2.693 4.272 3.778.597.258 1.064.412 1.428.528.6.191 1.147.164 1.58.1.482-.072 1.479-.604 1.687-1.166.208-.563.208-1.042.146-1.146-.063-.104-.23-.167-.48-.292z"/></svg>`,
+          facebook: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/></svg>`,
+          twitter: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+          instagram: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`,
+          email: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`,
+          phone: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`,
+          generic: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.43 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.43-1.63-4.33-3.56zm2.95-8H5.08c.9-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.33-.16-2 0-.67.07-1.34.16-2h4.68c.09.66.16 1.33.16 2 0 .67-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.9 1.93-2.49 3.14-4.33 3.56zM16.36 14c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>`
+        };
+
+        // Function to detect details based on URL
+        function getLinkDetails(url) {
+          if (!url) return { isBrand: false, color: '#1E1E1E', pulse: 'rgba(255,255,255,0.2)', svg: icons.generic };
+          
+          let lowerUrl = url.toLowerCase();
+          if (lowerUrl.indexOf('wa.me') > -1 || lowerUrl.indexOf('whatsapp') > -1) {
+            return { isBrand: true, color: '#25D366', pulse: 'rgba(37, 211, 102, 0.4)', svg: icons.whatsapp };
+          }
+          if (lowerUrl.indexOf('facebook.com') > -1) {
+            return { isBrand: true, color: '#1877F2', pulse: 'rgba(24, 119, 242, 0.4)', svg: icons.facebook };
+          }
+          if (lowerUrl.indexOf('twitter.com') > -1 || lowerUrl.indexOf('x.com') > -1) {
+            return { isBrand: true, color: '#000000', pulse: 'rgba(255, 255, 255, 0.25)', svg: icons.twitter };
+          }
+          if (lowerUrl.indexOf('instagram.com') > -1) {
+            return { isBrand: true, color: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', pulse: 'rgba(220, 39, 67, 0.4)', svg: icons.instagram };
+          }
+          if (lowerUrl.indexOf('mailto:') === 0) {
+            return { isBrand: true, color: '#EA4335', pulse: 'rgba(234, 67, 53, 0.4)', svg: icons.email };
+          }
+          if (lowerUrl.indexOf('tel:') === 0) {
+            return { isBrand: true, color: '#34A853', pulse: 'rgba(52, 168, 83, 0.4)', svg: icons.phone };
+          }
+          return { isBrand: false, color: '#1E1E1E', pulse: 'rgba(255, 255, 255, 0.2)', svg: icons.generic };
+        }
+
+        // Inject container styles
+        const style = $(`
+          <style>
+            .floating-btns-container {
+              position: fixed;
+              bottom: 30px;
+              right: 30px;
+              display: flex;
+              flex-direction: column-reverse;
+              gap: 15px;
+              z-index: 999999;
+            }
+            .floating-action-btn {
+              width: 56px;
+              height: 56px;
+              border-radius: 50%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              cursor: pointer;
+              transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+              box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+              overflow: hidden;
+              border: 1px solid rgba(255, 255, 255, 0.15);
+              position: relative;
+            }
+            .floating-action-btn:hover {
+              transform: scale(1.1) translateY(-3px);
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+              border-color: rgba(255, 255, 255, 0.4);
+            }
+            .floating-action-btn:active {
+              transform: scale(0.95) translateY(0);
+            }
+            .floating-action-btn a {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              text-decoration: none;
+            }
+            .floating-action-btn img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: 50%;
+            }
+            .floating-action-btn svg {
+              width: 26px;
+              height: 26px;
+              fill: #ffffff;
+            }
+            @keyframes fab-pulse-wa {
+              0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6), 0 4px 16px rgba(0, 0, 0, 0.25); }
+              70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0), 0 4px 16px rgba(0, 0, 0, 0.25); }
+              100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0), 0 4px 16px rgba(0, 0, 0, 0.25); }
+            }
+            @keyframes fab-pulse-generic {
+              0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25), 0 4px 16px rgba(0, 0, 0, 0.25); }
+              70% { box-shadow: 0 0 0 12px rgba(255, 255, 255, 0), 0 4px 16px rgba(0, 0, 0, 0.25); }
+              100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 4px 16px rgba(0, 0, 0, 0.25); }
+            }
+          </style>
+        `);
+        $('head').append(style);
+
+        const container = $('<div class="floating-btns-container"></div>');
+
+        enabledButtons.forEach((btnConfig, index) => {
+          const redirectUrl = btnConfig.redirectUrl || '#';
+          const target = btnConfig.target || '_blank';
+          const details = getLinkDetails(redirectUrl);
+
+          let innerHtml = '';
+          let btnStyle = '';
+
+          if (btnConfig.imageUrl) {
+            innerHtml = `<img src="${btnConfig.imageUrl}" alt="Redirect Icon">`;
+            btnStyle = `background-color: #ffffff;`;
+          } else {
+            innerHtml = details.svg;
+            btnStyle = `background: ${details.color};`;
+          }
+
+          const isWhatsApp = redirectUrl.indexOf('wa.me') > -1 || redirectUrl.indexOf('whatsapp') > -1;
+          const animationClass = isWhatsApp ? 'style="animation: fab-pulse-wa 2s infinite;"' : 'style="animation: fab-pulse-generic 2.5s infinite; animation-delay: ' + (index * 0.5) + 's;"';
+
+          const btnEl = $(`
+            <div class="floating-action-btn" style="${btnStyle}" ${animationClass}>
+              <a href="${redirectUrl}" target="${target}">
+                ${innerHtml}
+              </a>
+            </div>
+          `);
+
+          container.append(btnEl);
+        });
+
+        $('body').append(container);
+      }
     });
   </script>
 </body>
