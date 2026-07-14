@@ -44,6 +44,18 @@ If you want to host it without using command line:
 2. Drag and drop this folder directly into the browser.
 3. Netlify will instantly give you a live public link.
 
+### 3. Cloudflare Pages
+To publish for free using Cloudflare Pages:
+1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2. Navigate to **Workers & Pages** in the left menu, then click **Create Application**.
+3. Go to the **Pages** tab and click **Connect to Git**.
+4. Log in to your GitHub account and select the `floppyx` repository.
+5. In the *Set up builds and deployments* settings:
+   - **Framework preset**: None
+   - **Build command**: (Leave empty)
+   - **Build output directory**: (Leave empty or set to `/`)
+6. Click **Save and Deploy**. Cloudflare will automatically build and publish your flip book every time you push changes to GitHub!
+
 ***
 
 ## Customization
