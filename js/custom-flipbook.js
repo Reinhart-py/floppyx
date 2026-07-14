@@ -18,15 +18,23 @@ $(document).ready(function() {
   let isHardPage = false; // Toggle page folding mode
   
   // Configure PDF.js worker
-  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  const pdfjsLib = window.pdfjsLib || window.PDFJS;
   if (!pdfjsLib) {
     console.error("PDF.js library not loaded.");
     return;
   }
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
+  
+  if (pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf.worker.js';
+  } else {
+    pdfjsLib.workerSrc = 'js/pdf.worker.js';
+  }
   
   // Load PDF document
-  pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+  const docInit = pdfjsLib.getDocument(pdfUrl);
+  const docPromise = docInit.promise ? docInit.promise : docInit;
+  
+  docPromise.then(function(pdf) {
     pdfDoc = pdf;
     pageCount = pdf.numPages;
     
@@ -45,7 +53,18 @@ $(document).ready(function() {
   // Render utility (renders page to canvas asynchronously)
   function renderPage(pageNum, $pageContainer) {
     return pdfDoc.getPage(pageNum).then(function(page) {
-      const viewport = page.getViewport({ scale: 2.0 });
+      // Handle page scaling parameter if getViewport format differs
+      const scaleValue = 2.0;
+      let viewport;
+      if (typeof page.getViewport === 'function') {
+        // Try both options style { scale } and direct argument (older versions)
+        try {
+          viewport = page.getViewport({ scale: scaleValue });
+        } catch(e) {
+          viewport = page.getViewport(scaleValue);
+        }
+      }
+      
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       canvas.width = viewport.width;
@@ -57,7 +76,9 @@ $(document).ready(function() {
         canvasContext: ctx,
         viewport: viewport
       };
-      return page.render(renderContext).promise;
+      const renderTask = page.render(renderContext);
+      const renderPromise = renderTask.promise ? renderTask.promise : renderTask;
+      return renderPromise;
     });
   }
 
