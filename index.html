@@ -48,9 +48,9 @@
       const isAndroidPhone = isAndroid && /Mobi/i.test(navigator.userAgent);
 
       // Default actions:
-      // Android Phone -> single page: ON, smart pan: ON, sound: ON
-      // Tablet and Desktop -> single page: OFF, smart pan: ON, sound: ON
-      const defaultSinglePage = isAndroidPhone;
+      // Android -> single page: ON, smart pan: ON, sound: ON
+      // iOS / Desktop -> single page: OFF (unless mobile portrait), smart pan: ON, sound: ON
+      const defaultSinglePage = isAndroid;
       const defaultSmartPan = true;
       const defaultSounds = true;
 
