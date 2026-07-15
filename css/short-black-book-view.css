@@ -252,7 +252,6 @@
   background-color: #444;
 }
 .ctrl .fnavbar .menu .active:hover {
-  /*background-color: #444;*/
 }
 .ctrl .fnavbar .menu li:hover {
   background-color: #333;
@@ -305,7 +304,7 @@
   border-bottom-right-radius: 5px;
 }
 
-/* floating window */
+
 
 .flip-book .float-wnd {
   position: absolute;
@@ -357,7 +356,7 @@
   border-top: none;
 }
 
-/* toc */
+
 
 .ctrl .toc {
   font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif;
