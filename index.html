@@ -44,7 +44,12 @@
       };
 
       // Device detection for default actions
-      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent) || 
+                        /Android/i.test(navigator.platform) || 
+                        (navigator.maxTouchPoints > 0 && /Linux/i.test(navigator.platform)) ||
+                        /Linux arm/i.test(navigator.platform) ||
+                        /Linux aarch/i.test(navigator.platform);
+      
       const isAndroidPhone = isAndroid && /Mobi/i.test(navigator.userAgent);
 
       // Default actions:
@@ -53,6 +58,8 @@
       const defaultSinglePage = isAndroid;
       const defaultSmartPan = true;
       const defaultSounds = true;
+
+      console.log("Flipbook Device Detection - isAndroid:", isAndroid, "userAgent:", navigator.userAgent, "platform:", navigator.platform);
 
       $('#book-container').FlipBook({
         pdf: pdfUrl,
