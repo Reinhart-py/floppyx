@@ -17,6 +17,133 @@
       width: 100%;
       height: 100%;
     }
+
+    /* Mobile & Android responsive customizations */
+    @media (max-width: 768px) {
+      /* Floating action buttons size and spacing */
+      .floating-btns-container {
+        bottom: 20px !important;
+        right: 20px !important;
+        gap: 10px !important;
+      }
+      .floating-action-btn {
+        width: 44px !important;
+        height: 44px !important;
+      }
+      .floating-action-btn svg {
+        width: 20px !important;
+        height: 20px !important;
+      }
+
+      /* Lower toolbar layout - hide non-essential buttons to prevent screen overflow */
+      .ctrl .fnavbar .fnav .cmdZoomIn,
+      .ctrl .fnavbar .fnav .cmdZoomOut,
+      .ctrl .fnavbar .fnav .cmdDefaultZoom,
+      .ctrl .fnavbar .fnav .cmdFastBackward,
+      .ctrl .fnavbar .fnav .cmdFastForward,
+      .ctrl .fnavbar .fnav .cmdFullScreen,
+      .ctrl .fnavbar .fnav .cmdPrint {
+        display: none !important;
+      }
+      .ctrl .fnavbar .fnav .fnav-item>a {
+        padding: 12px 14px !important;
+        font-size: 16px !important; /* Larger touch targets & icons */
+      }
+      .ctrl .fnavbar .fnav li {
+        font-size: 14pt !important;
+      }
+      .ctrl .pages .number, 
+      .ctrl .pages .amount {
+        height: 24px !important;
+        font-size: 12pt !important;
+        width: 44px !important;
+      }
+      .ctrl .pages {
+        padding: 8px 5px !important;
+      }
+
+      /* Settings menu spacing & touch friendliness */
+      .ctrl .fnavbar .menu {
+        min-width: 180px !important;
+      }
+      .ctrl .fnavbar .menu li {
+        padding: 10px 15px !important;
+      }
+      .ctrl .fnavbar .menu li a {
+        font-size: 16px !important;
+      }
+      .ctrl .fnavbar .menu .icon {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 16px !important;
+      }
+
+      /* Table of Contents / Search overlay window full-width on mobile */
+      .flip-book .float-wnd {
+        width: calc(100% - 20px) !important;
+        left: 10px !important;
+        right: 10px !important;
+      }
+    }
+
+    /* Target Android devices specifically (added via JS class) */
+    .android-device .floating-btns-container {
+      bottom: 20px !important;
+      right: 20px !important;
+      gap: 10px !important;
+    }
+    .android-device .floating-action-btn {
+      width: 44px !important;
+      height: 44px !important;
+    }
+    .android-device .floating-action-btn svg {
+      width: 20px !important;
+      height: 20px !important;
+    }
+    .android-device .ctrl .fnavbar .fnav .cmdZoomIn,
+    .android-device .ctrl .fnavbar .fnav .cmdZoomOut,
+    .android-device .ctrl .fnavbar .fnav .cmdDefaultZoom,
+    .android-device .ctrl .fnavbar .fnav .cmdFastBackward,
+    .android-device .ctrl .fnavbar .fnav .cmdFastForward,
+    .android-device .ctrl .fnavbar .fnav .cmdFullScreen,
+    .android-device .ctrl .fnavbar .fnav .cmdPrint {
+      display: none !important;
+    }
+    .android-device .ctrl .fnavbar .fnav .fnav-item>a {
+      padding: 12px 14px !important;
+      font-size: 16px !important;
+    }
+    .android-device .ctrl .fnavbar .fnav li {
+      font-size: 14pt !important;
+    }
+    .android-device .ctrl .pages .number, 
+    .android-device .ctrl .pages .amount {
+      height: 24px !important;
+      font-size: 12pt !important;
+      width: 44px !important;
+    }
+    .android-device .ctrl .pages {
+      padding: 8px 5px !important;
+    }
+    .android-device .ctrl .fnavbar .menu {
+      min-width: 180px !important;
+    }
+    .android-device .ctrl .fnavbar .menu li {
+      padding: 10px 15px !important;
+    }
+    .android-device .ctrl .fnavbar .menu li a {
+      font-size: 16px !important;
+    }
+    .android-device .ctrl .fnavbar .menu .icon {
+      width: 18px !important;
+      height: 18px !important;
+      font-size: 16px !important;
+    }
+    .android-device .flip-book .float-wnd {
+      width: calc(100% - 20px) !important;
+      left: 10px !important;
+      right: 10px !important;
+    }
   </style>
 </head>
 <body>
@@ -60,6 +187,10 @@
       const defaultSounds = true;
 
       console.log("Flipbook Device Detection - isAndroid:", isAndroid, "userAgent:", navigator.userAgent, "platform:", navigator.platform);
+
+      if (isAndroid) {
+        $('body').addClass('android-device');
+      }
 
       $('#book-container').FlipBook({
         pdf: pdfUrl,
