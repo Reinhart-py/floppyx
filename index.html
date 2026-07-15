@@ -78,16 +78,18 @@
           script: 'js/default-book-view.js',
           sounds: sounds
         },
-        actions: {
-          cmdSinglePage: {
-            active: defaultSinglePage,
-            activeForMobile: defaultSinglePage
-          },
-          cmdSmartPan: {
-            active: defaultSmartPan
-          },
-          cmdSounds: {
-            active: defaultSounds
+        controlsProps: {
+          actions: {
+            cmdSinglePage: {
+              active: defaultSinglePage,
+              activeForMobile: defaultSinglePage
+            },
+            cmdSmartPan: {
+              active: defaultSmartPan
+            },
+            cmdSounds: {
+              active: defaultSounds
+            }
           }
         }
       });
