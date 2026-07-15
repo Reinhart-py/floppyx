@@ -18,9 +18,7 @@
       height: 100%;
     }
 
-    /* Mobile & Android responsive customizations */
     @media (max-width: 768px) {
-      /* Floating action buttons size and spacing */
       .floating-btns-container {
         bottom: 70px !important;
         right: 20px !important;
@@ -34,8 +32,6 @@
         width: 20px !important;
         height: 20px !important;
       }
-
-      /* Lower toolbar layout - hide non-essential buttons to prevent screen overflow */
       .ctrl .fnavbar .fnav .cmdZoomIn,
       .ctrl .fnavbar .fnav .cmdZoomOut,
       .ctrl .fnavbar .fnav .cmdDefaultZoom,
@@ -47,7 +43,7 @@
       }
       .ctrl .fnavbar .fnav .fnav-item>a {
         padding: 12px 14px !important;
-        font-size: 16px !important; /* Larger touch targets & icons */
+        font-size: 16px !important;
       }
       .ctrl .fnavbar .fnav li {
         font-size: 14pt !important;
@@ -61,8 +57,6 @@
       .ctrl .pages {
         padding: 8px 5px !important;
       }
-
-      /* Settings menu spacing & touch friendliness */
       .ctrl .fnavbar .menu {
         min-width: 180px !important;
       }
@@ -77,8 +71,6 @@
         height: 18px !important;
         font-size: 16px !important;
       }
-
-      /* Table of Contents / Search overlay window full-width on mobile */
       .flip-book .float-wnd {
         width: calc(100% - 20px) !important;
         left: 10px !important;
@@ -86,7 +78,6 @@
       }
     }
 
-    /* Target Android devices specifically (added via JS class) */
     .android-device .floating-btns-container {
       bottom: 70px !important;
       right: 20px !important;
@@ -170,7 +161,6 @@
         endFlip: 'sounds/end-flip.mp3'
       };
 
-      // Device detection for default actions
       const isAndroid = /Android/i.test(navigator.userAgent) || 
                         /Android/i.test(navigator.platform) || 
                         (navigator.maxTouchPoints > 0 && /Linux/i.test(navigator.platform)) ||
@@ -179,9 +169,6 @@
       
       const isAndroidPhone = isAndroid && /Mobi/i.test(navigator.userAgent);
 
-      // Default actions:
-      // Android -> single page: ON, smart pan: ON, sound: ON
-      // iOS / Desktop -> single page: OFF (unless mobile portrait), smart pan: ON, sound: ON
       const defaultSinglePage = isAndroid;
       const defaultSmartPan = true;
       const defaultSounds = true;
@@ -225,13 +212,11 @@
         }
       });
 
-      // Floating action buttons (supports multiple buttons stacked vertically, loaded from JSON)
       $.getJSON('buttons-config.json')
         .done(function(data) {
           renderFloatingButtons(data);
         })
         .fail(function() {
-          // Fallback to config.js floatingButtons config if JSON file load fails or is missing
           renderFloatingButtons(config.floatingButtons || []);
         });
 
@@ -239,7 +224,6 @@
         const enabledButtons = (floatingButtonsList || []).filter(btn => btn && btn.enabled);
         if (enabledButtons.length === 0) return;
 
-        // SVG Icons dictionary
         const icons = {
           whatsapp: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436.002 9.858-4.415 9.86-9.86.001-2.639-1.024-5.12-2.887-6.985C16.577 1.895 14.097 1.866 12 1.866c-5.437 0-9.857 4.417-9.86 9.864-.001 1.73.473 3.42 1.37 4.913L2.51 21.465l5.137-1.311zM16.64 13.9c-.25-.125-1.478-.73-1.707-.813-.228-.083-.395-.125-.56.125-.166.25-.644.813-.789.979-.145.167-.29.188-.54.062-.25-.125-1.055-.389-2.01-1.241-.742-.662-1.244-1.48-1.39-1.73-.145-.25-.015-.385.11-.51.113-.113.25-.292.375-.438.125-.146.166-.25.25-.417.083-.167.042-.313-.02-.438-.063-.125-.56-1.354-.768-1.854-.203-.488-.406-.423-.56-.431-.144-.008-.31-.008-.477-.008s-.438.063-.667.313c-.23.25-.875.855-.875 2.083 0 1.229.896 2.417.996 2.563.1.146 1.763 2.693 4.272 3.778.597.258 1.064.412 1.428.528.6.191 1.147.164 1.58.1.482-.072 1.479-.604 1.687-1.166.208-.563.208-1.042.146-1.146-.063-.104-.23-.167-.48-.292z"/></svg>`,
           facebook: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/></svg>`,
@@ -250,7 +234,6 @@
           generic: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.43 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.43-1.63-4.33-3.56zm2.95-8H5.08c.9-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.33-.16-2 0-.67.07-1.34.16-2h4.68c.09.66.16 1.33.16 2 0 .67-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.9 1.93-2.49 3.14-4.33 3.56zM16.36 14c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>`
         };
 
-        // Function to detect details based on URL
         function getLinkDetails(url) {
           if (!url) return { isBrand: false, color: '#1E1E1E', pulse: 'rgba(255,255,255,0.2)', svg: icons.generic };
           
@@ -276,7 +259,6 @@
           return { isBrand: false, color: '#1E1E1E', pulse: 'rgba(255, 255, 255, 0.2)', svg: icons.generic };
         }
 
-        // Inject container styles
         const style = $(`
           <style>
             .floating-btns-container {
